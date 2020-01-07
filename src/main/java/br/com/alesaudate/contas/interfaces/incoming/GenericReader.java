@@ -1,0 +1,39 @@
+package br.com.alesaudate.contas.interfaces.incoming;
+
+import br.com.alesaudate.contas.domain.Document;
+import br.com.alesaudate.contas.interfaces.incoming.bankaccount.BankAccountReader;
+import br.com.alesaudate.contas.interfaces.incoming.creditcard.CreditCardReader;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+
+@Component
+public class GenericReader implements DataReader {
+
+    private List<DataReader> dataReaders;
+
+    @Autowired
+    public GenericReader(BankAccountReader bankAccountReader, CreditCardReader creditCardReader) {
+        this.dataReaders = new ArrayList<>();
+        this.dataReaders.add(bankAccountReader);
+        this.dataReaders.add(creditCardReader);
+    }
+
+
+
+
+    @Override
+    public boolean fileIsCorrect(byte[] data) {
+        return dataReaders.stream().filter(dr -> dr.fileIsCorrect(data)).findAny().isPresent();
+    }
+
+    @Override
+    public Document loadDocument(byte[] data) throws IOException, ParseException {
+        DataReader reader = dataReaders.stream().filter(dr -> dr.fileIsCorrect(data)).findAny().get();
+        return reader.loadDocument(data);
+    }
+}

@@ -1,0 +1,44 @@
+plugins {
+	id 'org.springframework.boot' version '2.2.2.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+	id 'java'
+}
+
+group = 'br.com.alesaudate'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	compile group: 'org.apache.pdfbox', name: 'pdfbox', version: '2.0.1'
+	compile group: 'commons-io', name: 'commons-io', version: '2.6'
+	runtime("com.h2database:h2:1.4.199")
+	compile group: 'io.projectreactor', name: 'reactor-bus', version: '2.0.8.RELEASE'
+	compile group: 'io.projectreactor', name: 'reactor-core', version: '2.0.8.RELEASE'
+	compile group: 'org.apache.commons', name: 'commons-text', version: '1.8'
+
+
+
+
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+}
+
+test {
+	useJUnitPlatform()
+}
