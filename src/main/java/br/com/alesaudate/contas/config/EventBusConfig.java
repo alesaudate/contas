@@ -1,11 +1,7 @@
 package br.com.alesaudate.contas.config;
 
 
-import static reactor.bus.selector.Selectors.$;
-
-import br.com.alesaudate.contas.interfaces.intra.DocumentCreatedConsumer;
-import br.com.alesaudate.contas.interfaces.intra.ListPreferencesConsumer;
-import br.com.alesaudate.contas.interfaces.intra.WantsToListEntriesConsumer;
+import br.com.alesaudate.contas.events.listeners.*;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -15,21 +11,31 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import reactor.Environment;
 import reactor.bus.EventBus;
 
+import static reactor.bus.selector.Selectors.$;
+
 @Configuration
 @Setter(onMethod_ = @Autowired)
 public class EventBusConfig implements ApplicationListener<ContextRefreshedEvent> {
 
-    public static final String DOCUMENT_CREATED = "documentCreated";
-    public static final String WANTS_TO_LIST_ENTRIES = "wantsToListEntries";
-
+    public static final String FILE_FOUND_EVENT = "fileFoundEvent";
+    public static final String DOCUMENT_FOUND_EVENT = "documentFoundEvent";
+    public static final String DOCUMENT_READY = "documentReady";
+    public static final String READY_FOR_EVENTS = "readyForEvents";
 
     EventBus bus;
 
-    DocumentCreatedConsumer documentCreatedConsumer;
+    ListPreferencesListener listPreferencesListener;
 
-    WantsToListEntriesConsumer wantsToListEntriesConsumer;
+    NewFileDetectedMessageListener newFileDetectedMessageListener;
 
-    ListPreferencesConsumer listPreferencesConsumer;
+    NewDocumentDetectedListener newDocumentDetectedListener;
+
+    SaveDocumentListener saveDocumentListener;
+
+    AcceptCommandsListener acceptCommandsListener;
+
+    ListEntriesListener listEntriesListener;
+
 
 
     @Bean
@@ -46,9 +52,14 @@ public class EventBusConfig implements ApplicationListener<ContextRefreshedEvent
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
-        bus.on($(DOCUMENT_CREATED), documentCreatedConsumer);
-        bus.on($(WANTS_TO_LIST_ENTRIES), wantsToListEntriesConsumer);
-        bus.on($("."), listPreferencesConsumer);
+        bus.on($("."), listPreferencesListener);
+        bus.on($("."), listEntriesListener);
+        bus.on($(FILE_FOUND_EVENT), newFileDetectedMessageListener);
+        bus.on($(DOCUMENT_FOUND_EVENT), newDocumentDetectedListener);
+        bus.on($(DOCUMENT_READY),saveDocumentListener);
+        bus.on($(READY_FOR_EVENTS), acceptCommandsListener);
+
+
 
     }
 }

@@ -1,25 +1,12 @@
 package br.com.alesaudate.contas.config;
 
 
-import br.com.alesaudate.contas.domain.Document;
-import br.com.alesaudate.contas.domain.DocumentService;
+import br.com.alesaudate.contas.events.EventsProducerService;
 import br.com.alesaudate.contas.interfaces.incoming.GenericReader;
-import br.com.alesaudate.contas.interfaces.intra.EventsProducerService;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
-import java.util.concurrent.ExecutorService;
+import br.com.alesaudate.contas.interfaces.outcoming.OutputMechanism;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.SneakyThrows;
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -27,6 +14,10 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextRefreshedEvent;
+
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.concurrent.ExecutorService;
 
 @Configuration
 @ConditionalOnProperty(name = "contas.input.type", havingValue = "FILE")
@@ -46,6 +37,28 @@ public class FileInputConfiguration {
     }
 
 
+    @Bean
+    public OutputMechanism fileOutputMechanism() {
+        return new FileOutputMechanism(folderIn, folderOut, folderErr);
+    }
+
+
+    @AllArgsConstructor
+    public static class FileOutputMechanism implements OutputMechanism {
+
+        String folderIn;
+        String folderOut;
+        String folderErr;
+
+        @Override
+        public void handleFile(String file) throws IOException {
+            Path folderOut = Paths.get(this.folderOut);
+            Path fileToMove = Paths.get(file);
+
+            Path destination = folderOut.resolve(fileToMove.getFileName());
+            Files.move(fileToMove, destination);
+        }
+    }
 
     public static class StartSystem implements ApplicationListener<ContextRefreshedEvent> {
 
@@ -64,10 +77,6 @@ public class FileInputConfiguration {
 
         @Autowired
         private ExecutorService executorService;
-
-        @Autowired
-        private DocumentService documentService;
-
 
         @Autowired
         private EventsProducerService eventsProducerService;
@@ -118,37 +127,7 @@ public class FileInputConfiguration {
 
 
         private void loadFile(Path fullPath) {
-            try {
-                byte[] data = FileUtils.readFileToByteArray(fullPath.toFile());
-                if (reader.fileIsCorrect(data)) {
-                    Document document = reader.loadDocument(data);
-                    document.setName(fullPath.getFileName().toString());
-                    documentService.saveDocument(document);
-                }
-                Files.move(fullPath, Paths.get(folderOut).resolve(fullPath.getFileName()));
-
-            }
-            catch (Exception e) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                PrintStream printStream = new PrintStream(baos);
-                e.printStackTrace(printStream);
-
-                try {
-
-                    Path destinationPath = Paths.get(folderErr).resolve(fullPath.getFileName());
-                    String fullFileName = destinationPath.toString();
-
-                    Path errPath = Paths.get(fullFileName.substring(0, fullFileName.lastIndexOf(".")) + ".err");
-
-                    Files.move(fullPath, destinationPath);
-                    Files.write(errPath, baos.toByteArray());
-
-
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
-
+                eventsProducerService.publishFileFound(fullPath.toString());
         }
 
     }

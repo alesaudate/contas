@@ -1,29 +1,28 @@
-package br.com.alesaudate.contas.interfaces.incoming.bankaccount;
+package br.com.alesaudate.contas.interfaces.incoming.creditcard;
 
 import br.com.alesaudate.contas.domain.Document;
 import br.com.alesaudate.contas.domain.DocumentType;
 import br.com.alesaudate.contas.domain.Entry;
-import br.com.alesaudate.contas.domain.EntryType;
 import br.com.alesaudate.contas.interfaces.incoming.DataReader;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Component;
 
 @Component
-public class BankAccountReader implements DataReader {
+public class CreditCardClosedBillReader implements DataReader {
 
 
-    private static final String CHECK_PHRASE = "EXTRATO DE CONTA CORRENTE";
+    private static final String CHECK_PHRASE = "Limite Total de Crédito";
 
     @Override
     public boolean fileIsCorrect(byte[] data) {
@@ -42,6 +41,7 @@ public class BankAccountReader implements DataReader {
             return false;
         }
 
+
     }
 
     public Document loadDocument(byte[] data) throws IOException, ParseException {
@@ -49,7 +49,6 @@ public class BankAccountReader implements DataReader {
         document.setEntries(load(data));
         return document;
     }
-
 
 
     protected List<Entry> load (byte[] data) throws IOException, ParseException {
@@ -63,77 +62,72 @@ public class BankAccountReader implements DataReader {
 
         document.close();
 
+
         String lines[] = pdfFileInText.split("\\r?\\n");
 
-        Pattern p = Pattern.compile("^\\d{2}/\\d{2}/\\d{4} \\p{ASCII}+ (-?[0-9\\.]+,[0-9]{2}) (-?[0-9\\.]+,[0-9]{2})");
-        Pattern intermediatePattern = Pattern.compile("^\\d{2}/\\d{2}/\\d{4} \\p{ASCII}+");
+        Pattern p = Pattern.compile("^\\d{2}/\\d{2} \\p{ASCII}+ (-?[0-9\\.]+,[0-9]{2})$");
 
-        StringBuilder intermediate = new StringBuilder();
-        boolean appending = false;
+        String year = String.valueOf(LocalDate.now().getYear());
 
         List<Entry> entries = new ArrayList<>();
         for (String line : lines) {
             boolean found = p.matcher(line).find();
             if (found) {
-                entries.add(assembleEntry(line));
-                appending = false;
-                intermediate = new StringBuilder();
+                entries.add(assembleEntry(line, year));
             }
-            else {
-                if (intermediatePattern.matcher(line).find()) {
-                    appending = true;
-                    intermediate.append(line).append(" ");
-                }
-                else if (appending) {
-                    intermediate.append(line).append(" ");
-
-                    if (p.matcher(intermediate.toString()).find()) {
-                        entries.add(assembleEntry(intermediate.toString()));
-                        appending = false;
-                        intermediate = new StringBuilder();
-                    }
-                }
-
+            else if (line.startsWith("Data de fechamento desta fatura")) {
+                year = line.substring(line.lastIndexOf('/') + 1);
             }
         }
         return entries;
     }
 
 
-    private Entry assembleEntry(String line) throws ParseException {
+    private static final String INSTALLMENTS_PLACEHOLDER = "PARC ";
+    private static final String INSTALLMENTS_DELIMITER = "/";
+
+
+    private Entry assembleEntry(String line, String year) throws ParseException {
 
         Pattern numberPattern = Pattern.compile("(-?[0-9\\.]+,[0-9]{2})");
+        Pattern installmentsPattern = Pattern.compile(INSTALLMENTS_PLACEHOLDER + "[0-9]{2}" + INSTALLMENTS_DELIMITER + "[0-9]{2}");
+
+
         Matcher matcher = numberPattern.matcher(line);
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
 
-        String date = line.substring(0, line.indexOf(" "));
+        String date = line.substring(0, line.indexOf(" ")) + "/" + year;
 
         matcher.find();
         String firstNumber = matcher.group();
-        matcher.find();
-        String secondNumber = matcher.group();
 
-        String description = line.substring(line.indexOf(" "), line.indexOf(firstNumber)).trim();
+        String description = line.substring(line.indexOf(" "), line.indexOf(firstNumber));
 
         firstNumber = firstNumber.replace(".", "").replace(",", ".");
 
 
-        BigDecimal amount = new BigDecimal(firstNumber);
-        EntryType type = EntryType.CREDIT;
+        Integer installmentNumber = 1;
+        Integer totalNumberOfInstallments = 1;
 
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            amount = amount.abs();
-            type = EntryType.DEBT;
+        matcher = installmentsPattern.matcher(description);
+
+        if (matcher.find()) {
+            String installmentsText = description.substring(description.indexOf(INSTALLMENTS_PLACEHOLDER) + INSTALLMENTS_PLACEHOLDER.length());
+            installmentNumber = Integer.valueOf(installmentsText.substring(0, installmentsText.indexOf(INSTALLMENTS_DELIMITER)));
+            totalNumberOfInstallments = Integer.valueOf(installmentsText.substring(installmentsText.indexOf(INSTALLMENTS_DELIMITER) + INSTALLMENTS_DELIMITER.length()).trim());
+
+            description = description.substring(0, description.indexOf(INSTALLMENTS_PLACEHOLDER));
+
         }
+        description = description.trim();
 
         Entry entry = new Entry();
-        entry.setAmount(amount);
+        entry.setAmount(new BigDecimal(firstNumber));
         entry.setItemName(description);
         entry.setDate(sdf.parse(date));
-        entry.setTotalNumberOfInstallments(1);
-        entry.setInstallmentNumber(1);
-        entry.setEntryType(type);
+        entry.setInstallmentNumber(installmentNumber);
+        entry.setTotalNumberOfInstallments(totalNumberOfInstallments);
 
         return entry;
 
@@ -143,15 +137,9 @@ public class BankAccountReader implements DataReader {
 
 
 
-
-
-    public static void main(String[] args) throws Exception{
-
-
-        File file = new File("/home/asaudate/Downloads/comprovanteEnvioCCAvanzadaExtracto6B211F3FFCD25C5C334EA2DA.pdf");
-        byte[] data = FileUtils.readFileToByteArray(file);
-
-        new BankAccountReader().load(data);
+    public static void main(String[] args) throws IOException, ParseException {
+        new File("/home/asaudate/Downloads/Extrato_21_11_2019.pdf");
+        new CreditCardClosedBillReader().load(null);
 
 
 

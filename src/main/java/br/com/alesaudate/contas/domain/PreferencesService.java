@@ -18,28 +18,36 @@ public class PreferencesService {
 
     PreferencesRepository repository;
 
-    CategoryRepository categoryRepository;
-
     InteractionScheme scheme;
 
     SimpleDateFormat simpleDateFormat;
+
+    DocumentService documentService;
 
 
     @Transactional
     public void enrich(Entry entry) {
 
-        List<Preference> preferences = repository.findAll();
-        for (Preference preference : preferences) {
-            if (preference.tryToAdequate(entry)) {
-                return;
-            };
+        if (entry.needsEnrichment()) {
+            List<Preference> preferences = repository.findAll();
+            for (Preference preference : preferences) {
+                if (preference.tryToAdequate(entry)) {
+                    return;
+                };
+            }
+            fillMissingData(entry);
         }
-        fillMissingData(entry);
+        else {
+            //TODO criar um jeito da entrada ser usada como preferência (em casos onde ela foi criada pelo arquivo, por exemplo)
+        }
     }
 
 
 
     protected void fillMissingData(Entry entry) {
+
+        //TODO quando a entrada é uma parcela, tentar localizar os dados das parcelas anteriores e replicar
+
         if (entry.needsEnrichment()) {
             scheme.tell("Não conseguí localizar dados para enriquecer a entrada %s , do dia %s e valor %s", entry.getItemName(), simpleDateFormat.format(entry.getDate()), entry.getAmount());
             String description = scheme.ask("Qual é a descrição deste item?", Sets.newSet("Não sei", "nao sei", ""));
@@ -47,14 +55,14 @@ public class PreferencesService {
                 entry.setDescription(description);
 
                 String categoryName = scheme.ask("A qual categoria pertence esse item?");
-                Category c = categoryRepository.findByName(categoryName).orElse(categoryRepository.save(new Category(categoryName)));
 
+                Category c = documentService.findOrCreateCategory(categoryName);
 
                 entry.setCategory(c);
 
-                boolean makeDefault = scheme.askYes("OK. Você quer que essa seja a resposta padrão para itens assim?", Sets.newSet("Sim", "Quero"));
+                boolean makeDefault = scheme.askBoolean("OK. Você quer que essa seja a resposta padrão para itens assim?", Sets.newSet("Sim", "Quero"));
                 if (makeDefault) {
-                    boolean makeApproximation = scheme.askYes("Certo. O texto a ser usado será exatamente assim?", null);
+                    boolean makeApproximation = scheme.askBoolean("Certo. O texto a ser usado será exatamente assim?", null);
                     Preference newPreference = new Preference();
                     newPreference.setEntry(entry);
                     newPreference.setIsApproximate(!makeApproximation);

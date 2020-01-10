@@ -2,6 +2,7 @@ package br.com.alesaudate.contas.domain;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Optional;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -28,7 +29,7 @@ public class Entry {
     Date date;
 
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     Category category;
 
 
@@ -51,4 +52,7 @@ public class Entry {
         return entryType.getNormalizedAmount(amount);
     }
 
+    public String getCategoryName() {
+        return Optional.ofNullable(category).orElse(new Category()).getName();
+    }
 }

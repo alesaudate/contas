@@ -1,15 +1,11 @@
 package br.com.alesaudate.contas.interfaces.outcoming;
 
-import br.com.alesaudate.contas.domain.Document;
-import br.com.alesaudate.contas.domain.Period;
-import java.util.List;
-
 public abstract class Layout {
 
 
 
+//TODO criar uma forma de formatar a saída de dados
 
-    public abstract byte[] formatPeriod(Period period) ;
 
 
 

@@ -2,11 +2,15 @@ package br.com.alesaudate.contas.interfaces.incoming;
 
 import br.com.alesaudate.contas.domain.Document;
 import br.com.alesaudate.contas.interfaces.incoming.bankaccount.BankAccountReader;
-import br.com.alesaudate.contas.interfaces.incoming.creditcard.CreditCardReader;
+import br.com.alesaudate.contas.interfaces.incoming.creditcard.CreditCardClosedBillReader;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import br.com.alesaudate.contas.interfaces.incoming.creditcard.CreditCardOpenBillReader;
+import br.com.alesaudate.contas.interfaces.incoming.multiple.XLSXReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,13 +18,20 @@ import org.springframework.stereotype.Component;
 @Component
 public class GenericReader implements DataReader {
 
+
     private List<DataReader> dataReaders;
 
     @Autowired
-    public GenericReader(BankAccountReader bankAccountReader, CreditCardReader creditCardReader) {
-        this.dataReaders = new ArrayList<>();
-        this.dataReaders.add(bankAccountReader);
-        this.dataReaders.add(creditCardReader);
+    public GenericReader(BankAccountReader bankAccountReader,
+                         CreditCardClosedBillReader creditCardClosedBillReader,
+                         CreditCardOpenBillReader creditCardOpenBillReader,
+                         XLSXReader xlsxReader) {
+        this.dataReaders = Arrays.asList(
+                bankAccountReader,
+                creditCardClosedBillReader,
+                creditCardOpenBillReader,
+                xlsxReader
+        );
     }
 
 

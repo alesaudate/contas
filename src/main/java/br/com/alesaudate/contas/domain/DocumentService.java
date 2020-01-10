@@ -1,14 +1,13 @@
 package br.com.alesaudate.contas.domain;
 
 
-import br.com.alesaudate.contas.interfaces.InteractionScheme;
-import br.com.alesaudate.contas.interfaces.intra.EventsProducerService;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Comparator;
+import br.com.alesaudate.contas.domain.exceptions.CategoryNotFoundException;
+
 import java.util.List;
+import java.util.Optional;
+
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,59 +18,51 @@ public class DocumentService {
 
 
 
-
-    DocumentRepository documentRepository;
-
-    PreferencesService preferencesService;
-
-    EventsProducerService eventsProducerService;
-
     EntriesRepository entriesRepository;
 
-    SimpleDateFormat dateFormat;
-
-    InteractionScheme interactionScheme;
+    CategoryRepository categoryRepository;
 
     @Transactional
-    public void saveDocument(Document document) {
+    public void saveDocumentData(Document document) {
 
-        interactionScheme.tell("Acabei de detectar %d novas entradas: ", document.getEntries().size());
-        for (int i = 0; i < document.getEntries().size(); i++) {
-            interactionScheme.tell("%d ) %s", i, document.getEntries().get(i).getItemName());
-        }
-        String whichToRemove = interactionScheme.ask("Tem algum que você queira apagar? Se sim, digite os números separados por vírgula; se não, apenas siga em frente");
-        List<Entry> entries = removeEntries(document.getEntries(), whichToRemove);
+        document.getEntries().stream().forEach(e -> {
+            if (e.getCategory() != null && e.getCategory().getId() != null) {
+                e.setCategory(categoryRepository.getOne(e.getCategory().getId()));
+            }
+        });
+
+        List<Entry> entries = entriesRepository.saveAll(document.getEntries());
+
         document.setEntries(entries);
-
-        document.getEntries().stream().forEach(preferencesService::enrich);
-        entriesRepository.saveAll(document.getEntries());
-        documentRepository.save(document);
-        eventsProducerService.publishDocumentCreated(document);
     }
 
 
-    private List<Entry> removeEntries(List<Entry> entries, String whichToDelete) {
-        if (StringUtils.isBlank(whichToDelete)) {
-            return entries;
-        }
+    public List<Entry> findEntriesByCategoryName(String categoryName) throws CategoryNotFoundException {
+        Category category = categoryRepository.findByName(categoryName).orElseThrow(() -> new CategoryNotFoundException(categoryName));
+        return entriesRepository.findByCategory(category);
+    }
 
-
-        try {
-            Arrays.stream(whichToDelete.split(","))
-                    .map(String::trim)
-                    .map(Integer::valueOf)
-                    .distinct()
-                    .sorted(Comparator.reverseOrder())
-                    .forEach(i -> entries.remove(i.intValue()));
-            return entries;
-        }
-        catch (Exception e) {
-            return entries;
-        }
-
-
+    public boolean isEntryAlreadyIn(Entry entry) {
+        return !entriesRepository.findByDateAndItemNameAndAmount(entry.getDate(), entry.getItemName(), entry.getAmount()).isEmpty();
     }
 
 
+    @Transactional
+    public Category findOrCreateCategory(final String categoryName) {
+        final String catName = categoryName.trim().toLowerCase();
 
+
+        List<Category> categories = categoryRepository.findAll();
+        LevenshteinDistance levenshteinDistance = LevenshteinDistance.getDefaultInstance();
+
+        Optional<Category> optionalCategory = categories.stream()
+                .filter(category -> levenshteinDistance.apply(category.getName().trim().toLowerCase(), catName) <= 2)
+                .findAny();
+
+        if (optionalCategory.isPresent()) {
+            return optionalCategory.get();
+        }
+        return categoryRepository.saveAndFlush(new Category(categoryName));
+
+    }
 }

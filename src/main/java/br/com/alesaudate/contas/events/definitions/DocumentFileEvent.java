@@ -1,4 +1,4 @@
-package br.com.alesaudate.contas.interfaces.intra.events;
+package br.com.alesaudate.contas.events.definitions;
 
 
 import br.com.alesaudate.contas.domain.Document;
@@ -6,12 +6,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
-public class WantsToListEntriesEvent {
+public class DocumentFileEvent {
 
-    String answer;
     Document document;
+    String file;
 
 }

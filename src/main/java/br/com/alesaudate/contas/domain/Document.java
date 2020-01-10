@@ -11,23 +11,9 @@ import javax.persistence.OneToMany;
 import lombok.Data;
 
 @Data
-@Entity
 public class Document {
 
-
-
-    @Id
-    @GeneratedValue
-    Long id;
-
-
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     List<Entry> entries;
 
-
-    @Enumerated(EnumType.STRING)
-    DocumentType type;
-
-    String name;
 
 }

@@ -2,12 +2,9 @@ package br.com.alesaudate.contas.interfaces;
 
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,7 +21,13 @@ public class InteractionScheme {
 
     public String ask(String question, Object... args) {
         tell(question, args);
-        return sc.nextLine();
+        try {
+            return sc.nextLine();
+        }
+        catch (NoSuchElementException e) {
+            sc = new Scanner(System.in);
+            return sc.nextLine();
+        }
     }
 
     public String ask(String question, Set<String> noResponses) {
@@ -39,7 +42,7 @@ public class InteractionScheme {
     }
 
 
-    public boolean askYes(String question, Set<String> acceptedYesAnwsers) {
+    public boolean askBoolean(String question, Set<String> acceptedYesAnwsers) {
         if (acceptedYesAnwsers == null) {
             acceptedYesAnwsers = new HashSet<>();
         }
@@ -61,7 +64,9 @@ public class InteractionScheme {
         return sc.nextLine();
     }
 
-
+    public Set<String> asSet(String... strings) {
+        return Arrays.stream(strings).collect(Collectors.toSet());
+    }
 
     private boolean checkMatch (String string, Set<String> strings) {
         string = string.trim();

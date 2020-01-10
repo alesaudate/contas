@@ -1,5 +1,6 @@
 package br.com.alesaudate.contas;
 
+import br.com.alesaudate.contas.events.EventsProducerService;
 import br.com.alesaudate.contas.interfaces.InteractionScheme;
 import java.util.Scanner;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,16 +20,7 @@ public class ContasApplication {
 
     public static void main(String[] args) {
         ConfigurableApplicationContext ctx = SpringApplication.run(ContasApplication.class, args);
-        InteractionScheme io = ctx.getBean(InteractionScheme.class);
-        EventBus bus = ctx.getBean(EventBus.class);
-
-        while (true) {
-            try {
-                String input = io.getNextInput();
-                bus.notify(".", Event.wrap(input));
-            }
-            catch (Exception e) {}
-        }
+        EventsProducerService eventsProducerService = ctx.getBean(EventsProducerService.class);
+        eventsProducerService.publishReadyForEvents();
     }
-
 }
