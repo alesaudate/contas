@@ -2,6 +2,7 @@ package br.com.alesaudate.contas.config;
 
 
 import br.com.alesaudate.contas.events.EventsProducerService;
+import br.com.alesaudate.contas.interfaces.InteractionScheme;
 import br.com.alesaudate.contas.interfaces.incoming.GenericReader;
 import br.com.alesaudate.contas.interfaces.outcoming.OutputMechanism;
 import lombok.AllArgsConstructor;
@@ -80,6 +81,9 @@ public class FileInputConfiguration {
 
         @Autowired
         private EventsProducerService eventsProducerService;
+
+        @Autowired
+        private InteractionScheme io;
 
         @Override
         @SneakyThrows

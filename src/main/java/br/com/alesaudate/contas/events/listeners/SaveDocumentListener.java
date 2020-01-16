@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import static br.com.alesaudate.contas.config.EventBusConfig.DOCUMENT_READY;
+
 
 @Component
 @AllArgsConstructor(onConstructor_ = @Autowired)
@@ -28,4 +30,8 @@ public class SaveDocumentListener extends GenericMessageListener<DocumentFileEve
         getEventsProducerService().publishReadyForEvents();
     }
 
+    @Override
+    public String listenToEvent() {
+        return DOCUMENT_READY;
+    }
 }

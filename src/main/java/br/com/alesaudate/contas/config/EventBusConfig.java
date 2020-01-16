@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextRefreshedEvent;
 import reactor.Environment;
 import reactor.bus.EventBus;
+import reactor.fn.Consumer;
+
+import java.util.Map;
 
 import static reactor.bus.selector.Selectors.$;
 
@@ -22,21 +25,16 @@ public class EventBusConfig implements ApplicationListener<ContextRefreshedEvent
     public static final String DOCUMENT_READY = "documentReady";
     public static final String READY_FOR_EVENTS = "readyForEvents";
 
+
     EventBus bus;
-
-    ListPreferencesListener listPreferencesListener;
-
-    NewFileDetectedMessageListener newFileDetectedMessageListener;
-
-    NewDocumentDetectedListener newDocumentDetectedListener;
-
-    SaveDocumentListener saveDocumentListener;
 
     AcceptCommandsListener acceptCommandsListener;
 
-    ListEntriesListener listEntriesListener;
+    NewDocumentDetectedListener newDocumentDetectedListener;
 
+    NewFileDetectedMessageListener newFileDetectedMessageListener;
 
+    SaveDocumentListener saveDocumentListener;
 
     @Bean
     public Environment env() {
@@ -48,18 +46,13 @@ public class EventBusConfig implements ApplicationListener<ContextRefreshedEvent
         return EventBus.create(env, Environment.THREAD_POOL);
     }
 
-
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
-        bus.on($("."), listPreferencesListener);
-        bus.on($("."), listEntriesListener);
-        bus.on($(FILE_FOUND_EVENT), newFileDetectedMessageListener);
-        bus.on($(DOCUMENT_FOUND_EVENT), newDocumentDetectedListener);
-        bus.on($(DOCUMENT_READY),saveDocumentListener);
-        bus.on($(READY_FOR_EVENTS), acceptCommandsListener);
-
-
+        bus.on($(acceptCommandsListener.listenToEvent()), acceptCommandsListener);
+        bus.on($(newDocumentDetectedListener.listenToEvent()), newDocumentDetectedListener);
+        bus.on($(newFileDetectedMessageListener.listenToEvent()), newFileDetectedMessageListener);
+        bus.on($(saveDocumentListener.listenToEvent()), saveDocumentListener);
 
     }
 }

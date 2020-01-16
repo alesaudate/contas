@@ -1,5 +1,6 @@
 package br.com.alesaudate.contas.events.listeners;
 
+import br.com.alesaudate.contas.domain.Category;
 import br.com.alesaudate.contas.domain.Entry;
 import br.com.alesaudate.contas.domain.Preference;
 import br.com.alesaudate.contas.domain.PreferencesRepository;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class ListPreferencesListener extends InputCommandListener {
@@ -37,12 +39,14 @@ public class ListPreferencesListener extends InputCommandListener {
 
 
     private String formatPreference(Preference preference) {
-        Entry entry = preference.getEntry();
+        String itemName = preference.getItemName();
+        String description = preference.getDescription();
+        String categoryName = Optional.ofNullable(preference.getCategory()).orElse(new Category()).getName();
         if (preference.getIsApproximate()) {
-            return String.format("Quando a entrada for similar a %s , aplicar a descrição %s e a categoria %s", entry.getItemName(), entry.getDescription(), entry.getCategoryName());
+            return String.format("Quando a entrada for similar a %s , aplicar a descrição %s e a categoria %s", itemName, description, categoryName);
         }
         else {
-            return String.format("Quando a entrada tiver o texto igual a %s, aplicar a descrição %s e a categoria %s", entry.getItemName(), entry.getDescription(), entry.getCategoryName());
+            return String.format("Quando a entrada tiver o texto igual a %s, aplicar a descrição %s e a categoria %s", itemName, description, categoryName);
         }
     }
 

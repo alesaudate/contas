@@ -66,5 +66,8 @@ public abstract class GenericMessageListener <T> implements Consumer<Event<T>> {
     }
 
 
+    public abstract String listenToEvent();
+
+
 
 }

@@ -43,11 +43,16 @@ public class InteractionScheme {
 
 
     public boolean askBoolean(String question, Set<String> acceptedYesAnwsers) {
+        return askBoolean(question, acceptedYesAnwsers, new Object(){});
+    }
+
+    public boolean askBoolean(String question, Set<String> acceptedYesAnwsers, Object... args) {
         if (acceptedYesAnwsers == null) {
             acceptedYesAnwsers = new HashSet<>();
         }
         acceptedYesAnwsers.add("sim");
-        String response = ask(question).trim();
+        acceptedYesAnwsers.add("s");
+        String response = ask(question, args).trim();
         return checkMatch(response, acceptedYesAnwsers);
     }
 

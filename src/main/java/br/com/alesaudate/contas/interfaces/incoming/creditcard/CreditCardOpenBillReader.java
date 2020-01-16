@@ -1,15 +1,12 @@
 package br.com.alesaudate.contas.interfaces.incoming.creditcard;
 
 import br.com.alesaudate.contas.domain.Document;
-import br.com.alesaudate.contas.domain.DocumentType;
 import br.com.alesaudate.contas.domain.Entry;
 import br.com.alesaudate.contas.interfaces.incoming.DataReader;
-import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;

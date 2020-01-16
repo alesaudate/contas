@@ -1,7 +1,6 @@
 package br.com.alesaudate.contas.interfaces.incoming.creditcard;
 
 import br.com.alesaudate.contas.domain.Document;
-import br.com.alesaudate.contas.domain.DocumentType;
 import br.com.alesaudate.contas.domain.Entry;
 import br.com.alesaudate.contas.interfaces.incoming.DataReader;
 import java.io.File;

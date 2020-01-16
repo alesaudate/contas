@@ -1,7 +1,6 @@
 package br.com.alesaudate.contas.interfaces.incoming.bankaccount;
 
 import br.com.alesaudate.contas.domain.Document;
-import br.com.alesaudate.contas.domain.DocumentType;
 import br.com.alesaudate.contas.domain.Entry;
 import br.com.alesaudate.contas.domain.EntryType;
 import br.com.alesaudate.contas.interfaces.incoming.DataReader;
@@ -115,6 +114,7 @@ public class BankAccountReader implements DataReader {
         String secondNumber = matcher.group();
 
         String description = line.substring(line.indexOf(" "), line.indexOf(firstNumber)).trim();
+        description = description.substring(0, description.lastIndexOf(" "));
 
         firstNumber = firstNumber.replace(".", "").replace(",", ".");
 

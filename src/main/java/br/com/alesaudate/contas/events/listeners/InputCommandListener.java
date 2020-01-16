@@ -47,4 +47,8 @@ public abstract class InputCommandListener extends GenericMessageListener<String
         return 0.9;
     }
 
+    @Override
+    public String listenToEvent() {
+        return ".";
+    }
 }

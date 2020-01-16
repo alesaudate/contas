@@ -32,10 +32,6 @@ public class EventsProducerService {
         eventBus.notify(DOCUMENT_READY, Event.wrap(event));
     }
 
-    public void publishDocumentCreated(DocumentFileEvent event) {
-        eventBus.notify(DOCUMENT_CREATED, Event.wrap(event));
-    }
-
     public void publishReadyForEvents() {
         eventBus.notify(READY_FOR_EVENTS, Event.wrap(new Object()));
     }

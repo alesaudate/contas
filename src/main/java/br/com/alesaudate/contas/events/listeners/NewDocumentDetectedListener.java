@@ -1,11 +1,10 @@
 package br.com.alesaudate.contas.events.listeners;
 
+import br.com.alesaudate.contas.config.EventBusConfig;
 import br.com.alesaudate.contas.domain.Document;
 import br.com.alesaudate.contas.domain.DocumentService;
 import br.com.alesaudate.contas.domain.Entry;
 import br.com.alesaudate.contas.domain.PreferencesService;
-import br.com.alesaudate.contas.events.EventsProducerService;
-import br.com.alesaudate.contas.events.SystemLock;
 import br.com.alesaudate.contas.events.definitions.DocumentFileEvent;
 import br.com.alesaudate.contas.interfaces.InteractionScheme;
 import lombok.AllArgsConstructor;
@@ -31,11 +30,12 @@ public class NewDocumentDetectedListener extends GenericMessageListener<Document
         Document data = event.getDocument();
         cleanDocument(data);
 
-        boolean review = io.askBoolean("Novo documento detectado. Você quer revisar as entradas?", io.asSet("Sim", "Quero"));
+        boolean review = io.askBoolean("Novo documento detectado (%s). Você quer revisar as entradas?", io.asSet("Sim", "Quero"), event.getFile());
         if (review) {
             List<Entry> entries = data.getEntries();
             for (int i = 0; i < entries.size(); i++) {
-                io.tell("%d) %s => Valor: %s Descrição: %s Categoria: %s", (i+1), entries.get(i).getItemName(), entries.get(i).getAmount(), entries.get(i).getDescription(), entries.get(i).getCategoryName());
+                Entry e = entries.get(i);
+                io.tell("%d) %s => Valor: %s (%s) Descrição: %s Categoria: %s", (i+1), e.getItemName(), e.getAmount(), e.getEntryType(), e.getDescription(), e.getCategoryName());
             }
             String numbers = io.ask("Tem alguma que você deseja remover? Se sim, coloque os números separados por vírgula. Se não, apenas prossiga.");
             numbers = numbers.replace(" ", "");
@@ -44,7 +44,18 @@ public class NewDocumentDetectedListener extends GenericMessageListener<Document
                 entries.remove(n - 1);
             }
         }
+
+        boolean autoCreate = io.askBoolean("Deseja criar preferências automaticamente (quando possível) com base nesse documento?", io.asSet("Sim", "Sim, por favor","Desejo"));
+        if (autoCreate) {
+            preferencesService.autoCreatePreferences(data.getEntries());
+        }
+
         io.tell("Certo. Prosseguindo agora para enriquecimento de dados.");
+        io.tell("\nEu vou te fazer uma série de perguntas a respeito de cada uma das entradas localizadas.");
+        io.tell("O intuito destas perguntas é gerar uma base de conhecimento que pode ser utilizada para tornar o processo " +
+                "de captação de dados mais rápido e eficiente.");
+        io.tell("Se você deixar de responder, a resposta será considerada como um 'não' - ou seja, nada de mais irá acontecer.");
+        io.ask("Tecle <ENTER> para prosseguirmos.");
         data.getEntries().stream().forEach(preferencesService::enrich);
         getEventsProducerService().publishDocumentReady(event);
     }
@@ -74,4 +85,8 @@ public class NewDocumentDetectedListener extends GenericMessageListener<Document
         }
     }
 
+    @Override
+    public String listenToEvent() {
+        return EventBusConfig.DOCUMENT_FOUND_EVENT;
+    }
 }

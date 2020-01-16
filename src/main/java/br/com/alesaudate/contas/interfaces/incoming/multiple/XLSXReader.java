@@ -93,10 +93,17 @@ public class XLSXReader implements DataReader {
         if (StringUtils.isNotEmpty(installment)) {
             entry.setInstallmentNumber(Double.valueOf(installment).intValue());
         }
+        else {
+            entry.setInstallmentNumber(1);
+        }
 
         if (StringUtils.isNotEmpty(totalNumberOfInstallments)) {
             entry.setTotalNumberOfInstallments(Double.valueOf(totalNumberOfInstallments).intValue());
         }
+        else {
+            entry.setTotalNumberOfInstallments(1);
+        }
+
         entry.setEntryType(EntryType.DEBT);
 
         return entry;
