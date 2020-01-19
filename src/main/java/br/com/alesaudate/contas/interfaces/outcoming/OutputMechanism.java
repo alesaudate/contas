@@ -6,4 +6,5 @@ public interface OutputMechanism {
 
     void handleFile(String file) throws IOException;
 
+    void writeData(byte[] data, String file) throws IOException;
 }

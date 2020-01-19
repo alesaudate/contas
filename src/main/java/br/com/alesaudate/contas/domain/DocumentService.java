@@ -2,18 +2,17 @@ package br.com.alesaudate.contas.domain;
 
 
 import br.com.alesaudate.contas.domain.exceptions.CategoryNotFoundException;
-
-import java.util.List;
-import java.util.Optional;
-
 import br.com.alesaudate.contas.domain.exceptions.EntryNotFoundException;
+import br.com.alesaudate.contas.utils.Dates;
 import lombok.AllArgsConstructor;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.text.html.Option;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @AllArgsConstructor(onConstructor_ = @Autowired)
@@ -37,6 +36,11 @@ public class DocumentService {
         List<Entry> entries = entriesRepository.saveAll(document.getEntries());
 
         document.setEntries(entries);
+    }
+
+
+    public List<Entry> listEntriesByPeriod(LocalDate initialDate, LocalDate finalDate) {
+        return entriesRepository.findByDateBetween(Dates.date(initialDate), Dates.date(finalDate));
     }
 
 

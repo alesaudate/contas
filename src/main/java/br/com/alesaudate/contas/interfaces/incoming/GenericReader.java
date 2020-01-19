@@ -28,9 +28,9 @@ public class GenericReader implements DataReader {
                          XLSXReader xlsxReader) {
         this.dataReaders = Arrays.asList(
                 bankAccountReader,
-                creditCardClosedBillReader,
+                new DateCorrectionReader(creditCardClosedBillReader),
                 creditCardOpenBillReader,
-                xlsxReader
+                new DateCorrectionReader(xlsxReader)
         );
     }
 

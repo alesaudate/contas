@@ -1,26 +1,21 @@
 package br.com.alesaudate.contas;
 
-import br.com.alesaudate.contas.events.EventsProducerService;
-import br.com.alesaudate.contas.interfaces.InteractionScheme;
-import java.util.Scanner;
-import org.springframework.beans.factory.annotation.Autowired;
+import br.com.alesaudate.contas.config.FileInputConfiguration;
+import br.com.alesaudate.contas.domain.SystemManagement;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import reactor.bus.Event;
-import reactor.bus.EventBus;
+
+import java.io.IOException;
 
 @SpringBootApplication
-@Configuration
 public class ContasApplication {
 
-
-
-    public static void main(String[] args) {
-        ConfigurableApplicationContext ctx = SpringApplication.run(ContasApplication.class, args);
-        EventsProducerService eventsProducerService = ctx.getBean(EventsProducerService.class);
-        eventsProducerService.publishReadyForEvents();
+    public static void main(String[] args) throws IOException {
+        ConfigurableApplicationContext ctx =  SpringApplication.run(ContasApplication.class, args);
+        FileInputConfiguration.StartSystem startSystem = ctx.getBean(FileInputConfiguration.StartSystem.class);
+        SystemManagement systemManagement = ctx.getBean(SystemManagement.class);
+        startSystem.start();
+        systemManagement.start();
     }
 }
